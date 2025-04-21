@@ -11,6 +11,7 @@
     }
 
     #copyButton {
+      /* Renamed from copyIncogButton */
       width: 100%;
       padding: 10px;
       background-color: #4CAF50;
@@ -19,39 +20,31 @@
       border-radius: 5px;
       cursor: pointer;
       font-size: 16px;
+      /* margin-top: 10px;  Removed margin */
     }
 
     #copyButton:hover {
       background-color: #367c39;
     }
 
-    #copyIncogButton {
-      width: 100%;
-      padding: 10px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
-    }
-
-    #copyIncogButton:hover {
-      background-color: #367c39;
+    #copyButton:disabled {
+      /* Style for disabled state */
+      background-color: #cccccc;
+      cursor: not-allowed;
     }
 
     #message {
       margin-top: 10px;
       text-align: center;
       font-size: 14px;
+      min-height: 1em;
+      /* Prevent layout shift when message appears */
     }
   </style>
 </head>
 
 <body>
-  <button id="copyButton">Copy Details</button>
-  <button id="copyIncogButton">Copy From Ingoc Details</button>
+  <button id="copyButton">Copy Details</button> <!-- Single Button -->
   <div id="message"></div>
   <script src="popup.js"></script>
 </body>

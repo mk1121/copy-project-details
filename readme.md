@@ -9,6 +9,7 @@ A Chrome extension that allows you to easily copy project details from web pages
 - Extracts required skills automatically
 - User-friendly popup interface
 - Error handling and status messages
+- Context menu support for quick access
 
 ## Installation
 

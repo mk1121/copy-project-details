@@ -1,8 +1,4 @@
-// popup.js
-
 // Function to be injected - tries both logged-in and logged-out selectors
-// *** IMPORTANT: This function should be IDENTICAL to the one in background.js ***
-// *** Consider moving this to a shared utility file in a real application to avoid duplication ***
 function getProjectDetailsFromPage() {
   // --- Selectors ---
   const loggedInSelectors = {
@@ -120,68 +116,116 @@ function getProjectDetailsFromPage() {
   }
 }
 
-// --- Popup Script Logic ---
-
-const copyButton = document.getElementById("copyButton"); // Updated ID
-const messageDiv = document.getElementById("message");
-
-copyButton.addEventListener("click", async () => {
-  messageDiv.textContent = "Extracting...";
-  copyButton.disabled = true; // Disable button
-
-  try {
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
+function copyTextToClipboardOnPage(text) {
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      console.log("Clipboard write successful from content script.");
+      // You could potentially send a message back to the service worker
+      // here if you needed confirmation, but usually not necessary.
+    })
+    .catch((err) => {
+      console.error("Content script clipboard write failed:", err);
+      // Handle error - maybe alert the user via other means if needed.
     });
+}
 
-    if (!tab || typeof tab.id === "undefined") {
-      throw new Error("Could not identify active tab.");
-    }
+// --- Context Menu Setup ---
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: "copyProjectDetailsContextMenu",
+    title: "Copy Project Details",
+    contexts: ["page"],
+  });
+  console.log("Context menu created.");
+});
 
-    // Execute the *combined* script function
-    const results = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      function: getProjectDetailsFromPage, // Use the combined function
-    });
+// --- Context Menu Click Handler ---
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "copyProjectDetailsContextMenu" && tab?.id) {
+    const tabId = tab.id; // Store tabId for later use
+    console.log("Context menu item clicked for tab:", tabId);
 
-    // Process results (same logic as before, but only one path needed)
-    if (chrome.runtime.lastError) {
-      console.error(
-        "Script injection failed:",
-        chrome.runtime.lastError.message,
-      );
-      messageDiv.textContent = `Injection Error: ${chrome.runtime.lastError.message}`;
-    } else if (results && results[0] && results[0].result) {
-      const result = results[0].result;
-
-      if (result.warnings)
-        console.warn("Content Script Warnings:", result.warnings);
-      if (result.errors) console.warn("Content Script Errors:", result.errors);
-
-      if (result.success && result.textToCopy) {
-        messageDiv.textContent = "Copying...";
-        try {
-          await navigator.clipboard.writeText(result.textToCopy);
-          messageDiv.textContent = "Details copied!";
-          console.log("Copy successful via popup.");
-          // setTimeout(() => window.close(), 1500); // Optional close
-        } catch (clipboardError) {
-          console.error("Popup clipboard write failed:", clipboardError);
-          messageDiv.textContent = `Clipboard Error: ${clipboardError.message}`;
+    // 1. First, execute the script to GET the details
+    chrome.scripting
+      .executeScript({
+        target: { tabId: tabId },
+        function: getProjectDetailsFromPage,
+      })
+      .then(async (results) => {
+        // Marked async just in case, though not strictly needed here now
+        console.log(
+          "executeScript (get details) promise resolved. Checking results:",
+          results,
+        );
+        if (chrome.runtime.lastError) {
+          console.error(
+            "Script injection (get details) failed:",
+            chrome.runtime.lastError.message,
+          );
+          return;
         }
-      } else {
-        messageDiv.textContent = `Extraction Failed: ${result.error || "Unknown reason"}`;
-        console.error("Content script extraction error:", result.error);
-      }
-    } else {
-      console.error("Script executed but no valid result received:", results);
-      messageDiv.textContent = "Error: Unexpected result from page.";
-    }
-  } catch (error) {
-    console.error("Error in popup script:", error);
-    messageDiv.textContent = `Popup Error: ${error.message}`;
-  } finally {
-    copyButton.disabled = false; // Re-enable button
+
+        if (results && results[0] && results[0].result) {
+          const result = results[0].result;
+          console.log(
+            "Result received from content script:",
+            JSON.stringify(result, null, 2),
+          );
+
+          if (result.warnings)
+            console.warn("Content Script Warnings:", result.warnings);
+          if (result.errors)
+            console.warn("Content Script Errors:", result.errors);
+
+          if (result.success && result.textToCopy) {
+            // --- MODIFIED PART ---
+            // 2. If successful, execute ANOTHER script to WRITE to clipboard
+            console.log(
+              `Attempting to inject copy script with text: "${result.textToCopy}"`,
+            );
+            try {
+              await chrome.scripting.executeScript({
+                target: { tabId: tabId },
+                function: copyTextToClipboardOnPage,
+                args: [result.textToCopy], // Pass the text as an argument
+              });
+              console.log("Clipboard write command sent to content script.");
+              // Optional: Notify user success (requires 'notifications' permission)
+              // chrome.notifications.create(...);
+            } catch (injectionError) {
+              console.error(
+                "Script injection (copy text) failed:",
+                injectionError,
+              );
+              // Optional: Notify user about injection failure
+              // chrome.notifications.create(...);
+            }
+            // --- END MODIFIED PART ---
+          } else {
+            console.error(
+              "Content script extraction failed or returned no text:",
+              result.error || "Unknown reason",
+            );
+            // Optional: Notify user about extraction failure
+            // chrome.notifications.create(...);
+          }
+        } else {
+          console.error(
+            "Script execution (get details) returned invalid result structure:",
+            results,
+          );
+          // Optional: Notify user about unexpected result
+          // chrome.notifications.create(...);
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "Error during initial script execution (get details):",
+          error,
+        );
+        // Optional: Notify user about execution error
+        // chrome.notifications.create(...);
+      });
   }
 });
