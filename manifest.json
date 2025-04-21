@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Copy Project Details",
+  "version": "1.0",
+  "description": "Copies project title and description",
+  "permissions": [
+    "activeTab",
+    "clipboardWrite",
+    "scripting"
+  ],
+  "action": {
+    "default_title": "Copy Details",
+    "default_popup": "popup.html"
+  }
+}
