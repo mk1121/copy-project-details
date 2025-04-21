@@ -2,6 +2,8 @@
 
 A Chrome extension that allows you to easily copy project details from web pages.
 
+![Extension Screenshot](images/screenshot.png)
+
 ## Features
 
 - Copy project title and description from logged-in view
