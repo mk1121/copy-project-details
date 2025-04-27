@@ -2,7 +2,10 @@
 
 A Chrome extension that allows you to easily copy project details from web pages.
 
-![Extension Screenshot](images/screenshot.png)
+![Extension Screenshot](assets/images/screenshot.png)
+
+![Extension Demo GIF](assets/images/demo.gif)
+
 
 ## Features
 

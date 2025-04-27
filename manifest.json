@@ -1,24 +1,24 @@
 {
   "manifest_version": 3,
   "name": "Copy Project Details",
-  "version": "1.1", // Incremented version
+  "version": "1.1",
   "description": "Copies project title, description, and skills via popup or context menu.",
   "permissions": [
     "activeTab",
     "clipboardWrite",
     "scripting",
-    "contextMenus" // <-- Added permission
+    "contextMenus" 
   ],
   "background": {
-    "service_worker": "background.js" // <-- Added service worker
+    "service_worker": "background.js"
   },
   "action": {
     "default_title": "Copy Details",
     "default_popup": "popup.html"
   },
-  "icons": { // Optional: Add icons for better presentation
-    "16": "images/icon16.png",
-    "48": "images/icon48.png",
-    "128": "images/icon128.png"
+  "icons": { 
+    "16": "assets/images/icon16.png",
+    "48": "assets/images/icon48.png",
+    "128": "assets/images/icon128.png"
   }
 }
